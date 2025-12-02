@@ -18,7 +18,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  location = "France Central"
+  location = "Sweden Central"
   name     = "AzureLabLVM"
 }
 
