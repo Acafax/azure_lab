@@ -1,14 +1,7 @@
-provider "azurerm" {features {}}
-
 terraform {
-
   required_version = ">= 1.0.0" # Ensure that the Terraform version is 1.0.0 or higher
 
   required_providers {
-    aws = {
-      source = "hashicorp/aws" # Specify the source of the AWS provider
-      version = "~> 4.0"        # Use a version of the AWS provider that is compatible with version
-    }
     null = {
       source  = "hashicorp/null"
       version = "3.2.4"
@@ -20,13 +13,15 @@ terraform {
   }
 }
 
+provider "azurerm" {features {}}
+
 resource "azurerm_resource_group" "rg" {
-  location = "North Europ"
+  location = "North Europe"
   name     = "AzureLabLVM"
 }
 
 resource "azurerm_virtual_network" "vnet" {
-  location            = "North Europ"
+  location            = azurerm_resource_group.rg.location
   name                = "lab-vnet"
   address_space       = ["10.0.0.0/16"]
   resource_group_name = azurerm_resource_group.rg.name
@@ -113,14 +108,14 @@ resource "azurerm_managed_disk" "dysk_3" {
 resource "azurerm_virtual_machine_data_disk_attachment" "attach_1" {
   caching            = "ReadWrite"
   lun                = 0
-  managed_disk_id    = azurerm_managed_disk.dysk_1
+  managed_disk_id    = azurerm_managed_disk.dysk_1.id
   virtual_machine_id = azurerm_linux_virtual_machine.vm_lab.id
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "attach_2" {
   caching            = "ReadWrite"
   lun                = 1
-  managed_disk_id    = azurerm_managed_disk.dysk_2
+  managed_disk_id    = azurerm_managed_disk.dysk_2.id
   virtual_machine_id = azurerm_linux_virtual_machine.vm_lab.id
 
 }
@@ -128,7 +123,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "attach_2" {
 resource "azurerm_virtual_machine_data_disk_attachment" "attach_3" {
   caching            = "ReadWrite"
   lun                = 2
-  managed_disk_id    = azurerm_managed_disk.dysk_3
+  managed_disk_id    = azurerm_managed_disk.dysk_3.id
   virtual_machine_id = azurerm_linux_virtual_machine.vm_lab.id
 }
 
