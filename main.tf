@@ -13,10 +13,12 @@ terraform {
   }
 }
 
-provider "azurerm" {features {}}
+provider "azurerm" {
+  features {}
+}
 
 resource "azurerm_resource_group" "rg" {
-  location = "North Europe"
+  location = "France Central"
   name     = "AzureLabLVM"
 }
 
