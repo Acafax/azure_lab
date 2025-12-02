@@ -55,6 +55,27 @@ resource "azurerm_network_interface" "network_interface" {
   }
 }
 
+resource "azurerm_network_security_group" "nsg" {
+  location            = azurerm_resource_group.rg.location
+  name                = "azure-lab-security-group"
+  resource_group_name = azurerm_resource_group.rg.name
+  security_rule {
+    name = "SSH"
+    priority = 1001
+    direction = "Inbound"
+    access = "Allow"
+    protocol = "Tcp"
+    source_port_range = "*"
+    destination_port_range = "22"
+    source_address_prefix = "AzureCloud"
+    destination_address_prefix = "*"
+  }
+}
+resource "azurerm_network_interface_security_group_association" "nsg_association" {
+  network_interface_id      = azurerm_network_interface.network_interface.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
 resource "azurerm_linux_virtual_machine" "vm_lab" {
   name                = "vm-lab-azure-lvm"
   resource_group_name = azurerm_resource_group.rg.name
