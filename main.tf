@@ -18,7 +18,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  location = "Sweden Central"
+  location = "swedencentral"
   name     = "AzureLabLVM"
 }
 
@@ -36,7 +36,8 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name = azurerm_virtual_network.vnet.name
 }
 resource "azurerm_public_ip" "public_ip" {
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
+  sku                 = "Standard"
   location            = azurerm_resource_group.rg.location
   name                = "vm-public-ip"
   resource_group_name = azurerm_resource_group.rg.name
