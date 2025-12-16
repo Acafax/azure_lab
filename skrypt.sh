@@ -1,54 +1,62 @@
-#!/bin/bash
-# A. Instalacja (wyciszona)
-echo '>>> [1/7] Aktualizacja i instalacja LVM...'
-sudo apt-get update > /dev/null 2>&1
+#update systemu
+# zainstalowanie lvm2
+# zrobienie PV
+# wykonanie wspólnej VG
+# wywołanie lv
+# partycjonowanie lv na mirroring i spriping
+# montowanie dysków do VM
+# formatowanie dysków
+# testowanie zapisu
+# testowani odczytu
+
+echo "--------------------------------------------"
+echo "[1/11] update systemu i instalacja lvm2"
+sudo apt-update
 sudo apt-get install -y lvm2 > /dev/null 2>&1
 
-# B. Inicjalizacja Dysków Fizycznych (PV)
-# -ff -y aby nie było błędu jezeli zostaną stare partycje
-echo '>>> [2/7] Tworzenie Physical Volumes...'
-sudo pvcreate -ff -y /dev/sdc /dev/sdd /dev/sde > /dev/null
 
-# C. Tworzenie Grupy (VG)
-echo '>>> [3/7] Tworzenie Volume Group (data_vg)...'
-sudo vgcreate data_vg /dev/sdc /dev/sdd /dev/sde > /dev/null
+echo "--------------------------------------------"
+echo "[2/11] tworzenie dysków fizycznych"
+sudo pvcreate -ff -y /dev/sdc /dev/sdd /dev/sde > dev/null 2>&1# nowe dyski c d e
 
-# D. Tworzenie Woluminów Logicznych (LV) - RÓWNOLEGLE
-echo '>>> [4/7] Tworzenie LV: Linear, Striped, Mirror...'
+echo "--------------------------------------------"
+echo "[3/11] tworzenie VG z dysków"
+sudo vgcreate data_vg /dev/sdc /dev/sdd /dev/sde > dev/null 2>&1
 
-# 1. LINEAR (5GB) - bierze po kolei
-echo '>>> [5/7] Tworzenie LV: Linear, Striped, Mirror...'
-sudo lvcreate -n lv_linear -L 5G data_vg > /dev/null
+echo "--------------------------------------------"
+echo "[4/11] tworzenie LV mirror"
+sudo lvcreate --type raid1 -n lv_mirror -L 2G -m1 > dev/null 2>&1
 
-# 2. STRIPED (6GB) - paski na 3 dyskach (stąd -i 3)
-echo '>>> [6/7] Tworzenie LV: Linear, Striped, Mirror...'
-sudo lvcreate -n lv_striped -L 6G -i 3 data_vg > /dev/null
+echo "--------------------------------------------"
+echo "[5/11] tworzenie lv Stripe"
+sudo lvcreate -n lv_stripe -L 6G -i3 > /dev/null 2>&1
 
-# 3. MIRROR (2GB danych) - kopia 1:1 (wymaga 4GB miejsca fizycznego)
-echo '>>> [7/7] Tworzenie LV: Mirror'
-sudo lvcreate --type raid1 -n lv_mirror -L 2G -m 1 data_vg > /dev/null
 
-# E. Formatowanie i Montowanie
-sudo mkfs.ext4 /dev/data_vg/lv_linear > /dev/null 2>&1
-sudo mkfs.ext4 /dev/data_vg/lv_striped > /dev/null 2>&1
-sudo mkfs.ext4 /dev/data_vg/lv_mirror > /dev/null 2>&1
+echo "--------------------------------------------"
+echo "[6/11] formatowanie dysków"
+sudo mkfx.ext4 /dev/data_vg/lv_mirror
+sudo mkfs.ext4 -ff -y /dev/data_vg/lv_stripe
 
-sudo mkdir -p /mnt/linear /mnt/striped /mnt/mirror
-sudo mount /dev/data_vg/lv_linear /mnt/linear
-sudo mount /dev/data_vg/lv_striped /mnt/striped
-sudo mount /dev/data_vg/lv_mirror /mnt/mirror
+echo "--------------------------------------------"
+echo "[8/11] Montowanie dysków"
+sudo mkdir -p /dev/mnt
+sudo mkdir -p /dev/mnt
 
-# F. TESTY WYDAJNOŚCI (dd)
-echo ' '
-echo '================= WYNIKI TESTÓW WYDAJNOŚCI ================='
+sudo mount /dev/mnt /dev/data_vg/lv_mirror
+sudo mount /dev/mnt /dev/data_vg/lv_stripe
 
-echo -n '1. LINEAR WRITE:  '
-sudo dd if=/dev/zero of=/mnt/linear/testfile bs=1G count=1 oflag=direct 2>&1 | grep -o '[0-9.]* MB/s'
+echo "--------------------------------------------"
+echo "[9/11] testowanie zapisy do lv_mirror"
+sudo dd if=/dev/zero of=/dev/mnt/mirror/testfile -bs=1GB count=1 oflag=direct
 
-echo -n '2. MIRROR WRITE:  '
-sudo dd if=/dev/zero of=/mnt/mirror/testfile bs=1G count=1 oflag=direct 2>&1 | grep -o '[0-9.]* MB/s'
+echo "--------------------------------------------"
+echo "[10/11] testowanie zapisy do lv_stripe"
+sudo dd if=/dev/zero of=/dev/mnt/stripe/testfile -bs=1GB count=1 oflag=direct
 
-echo -n '3. STRIPED WRITE: '
-sudo dd if=/dev/zero of=/mnt/striped/testfile bs=1G count=1 oflag=direct 2>&1 | grep -o '[0-9.]* MB/s'
+echo "--------------------------------------------"
+echo "[11/11] testowanie odczytu z lv_mirror"
+sudo dd if=/dev/mnt/mirror/testfile of=/dev/null -bs=1GB count=1 oflag=direst
 
-echo '============================================================'
+echo "--------------------------------------------"
+echo "[10/11] testowanie odczytu z lv_stripe"
+sudo dd if=/dev/mnt/stripe/testfile of=/dev/null -bs=1GB count=1 oflag=direst
