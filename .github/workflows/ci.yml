@@ -1,0 +1,23 @@
+name: Terraform validation
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive
+      - name: Initialize providers
+        run: terraform init -backend=false -lockfile=readonly
+      - name: Validate configuration
+        run: terraform validate -no-color
